@@ -1,0 +1,17 @@
+# Route TLS de type Edge : le routeur (HAProxy) termine le TLS,
+# puis relaie en HTTP clair vers le pod sur le port 8080.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: frontend-app
+  labels:
+    app: frontend-app
+spec:
+  to:
+    kind: Service
+    name: frontend-app
+  port:
+    targetPort: 8080-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

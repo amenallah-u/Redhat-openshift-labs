@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-api
+  labels:
+    app: backend-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: backend-api
+  template:
+    metadata:
+      labels:
+        app: backend-api
+        deployment: backend-api
+    spec:
+      containers:
+        - name: backend-api
+          image: quay.io/redhattraining/hello-world-nginx:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-api
+  labels:
+    app: backend-api
+spec:
+  type: ClusterIP
+  selector:
+    deployment: backend-api
+  ports:
+    - name: 8080-tcp
+      port: 8080
+      targetPort: 8080
+      protocol: TCP

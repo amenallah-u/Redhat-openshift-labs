@@ -1,0 +1,19 @@
+# OPTIONNEL (hors énoncé du TP).
+# Avec deny-by-default, le routeur OpenShift ne peut plus joindre frontend-app :
+# la route externe renverrait une erreur 503 / Application is not available.
+# Cette règle autorise uniquement le trafic venant du routeur (namespace openshift-ingress).
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-from-openshift-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend-app
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress

@@ -1,0 +1,13 @@
+name: lint
+on: [push, pull_request]
+jobs:
+  yaml-and-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: yamllint
+        run: |
+          pip install yamllint
+          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" manifests/
+      - name: shellcheck
+        run: shellcheck scripts/*.sh

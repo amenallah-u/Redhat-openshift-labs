@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-app
+  labels:
+    app: frontend-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: frontend-app
+  template:
+    metadata:
+      labels:
+        app: frontend-app
+        deployment: frontend-app
+    spec:
+      containers:
+        - name: frontend-app
+          image: quay.io/redhattraining/hello-world-nginx:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-app
+  labels:
+    app: frontend-app
+spec:
+  type: ClusterIP
+  selector:
+    deployment: frontend-app
+  ports:
+    - name: 8080-tcp
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
