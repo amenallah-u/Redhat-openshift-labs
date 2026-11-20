@@ -20,30 +20,42 @@ Auteur : Amenallah Aouadi, ISI Kef (Network and Systems Engineering).
 ## Architecture
 
 ```mermaid
-flowchart LR
-    U([Utilisateur externe]) -- "HTTPS 443" --> R
 
-    subgraph OCP["Cluster OpenShift"]
-        direction LR
-        R["Router HAProxy<br/>namespace openshift-ingress<br/>terminaison TLS Edge"]
-
-        subgraph NS["Projet / namespace du TP"]
-            direction LR
-            RT["Route frontend-app<br/>tls: edge"]
-            FS["Service frontend-app<br/>ClusterIP : 8080"]
-            FP["Pod frontend-app<br/>nginx : 8080<br/>app=frontend-app"]
-            BS["Service backend-api<br/>ClusterIP : 8080"]
-            BP["Pod backend-api<br/>nginx : 8080<br/>app=backend-api"]
-            T["Pod tiers<br/>(test d'isolation)"]
-            DNS[("CoreDNS<br/>backend-api.projet.svc.cluster.local")]
-        end
-
-        R -- "HTTP 8080 (clair)" --> RT
-        RT --> FS --> FP
-        FP -. "résolution DNS" .-> DNS
-        FP == "autorisé : allow-frontend-to-backend" ==> BS --> BP
-        T -- "bloqué : deny-by-default" --x BS
+flowchart TB
+    USER([External User])
+    ROUTER[OpenShift Router - HAProxy]
+    ROUTE[OpenShift Route - TLS Edge]
+    
+    subgraph CLUSTER["OpenShift Cluster"]
+      subgraph NS["Application Namespace"]
+        FS["Frontend Service - ClusterIP :8080"]
+        FP["Frontend Deployment / Pod"]
+        BS["Backend Service - ClusterIP :8080"]
+        BP["Backend Deployment / Pod"]
+        DNS["OpenShift Cluster DNS"]
+        TEST["Third-party Test Pod"]
+        
+        FP -->|"HTTP TCP 8080"| BS
+        BS --> BP
+        FP -.->|"DNS lookup"| DNS
+        TEST -.->|"DENIED by NetworkPolicy"| BP
+      end
+      
+      NP1["NetworkPolicy: Deny All Ingress"]
+      NP2["NetworkPolicy: Allow Frontend to Backend"]
+      NP3["NetworkPolicy: Allow OpenShift Ingress"]
     end
+    
+    USER -->|"HTTPS 443"| ROUTER
+    ROUTE -.->|"Configures routing"| ROUTER
+    ROUTER -->|"HTTP TCP 8080"| FS
+    FS --> FP
+    
+    NP1 -.-> FP
+    NP1 -.-> BP
+    NP2 -.-> BP
+    NP3 -.-> FP
+
 ```
 
 ### Principe
@@ -192,6 +204,4 @@ Les captures numérotées sont dans [`docs/screenshots/`](docs/screenshots/) et 
 - Les manifests déclaratifs fournissent les labels `app` et `deployment` comme le fait `oc new-app`. Les noms de pods, hosts de route et IP varient selon le cluster.
 - Ce dépôt est un support pédagogique et ne vise pas la production : pas de `NetworkPolicy` egress, pas de certificat personnalisé, un seul réplica.
 
-## Licence
-
-MIT
+## Academic Red Hat OpenShift networking lab under the instruction of Professor Sofien Mhalti at ISI Kef. Covers deployments, services, DNS, TLS Edge Routes, NetworkPolicies, Zero Trust, and troubleshooting.
